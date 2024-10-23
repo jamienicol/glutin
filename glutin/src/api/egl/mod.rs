@@ -941,6 +941,12 @@ where
         ffi::egl::types::EGLDisplay,
     ) -> Result<ffi::egl::types::EGLConfig, ()>,
 {
+    println!("jamiedbg choose_fbconfig()");
+    println!("egl_version: {:?}", egl_version);
+    println!("api: {:?}", api);
+    println!("version: {:?}", version);
+    println!("surface_type: {:?}", surface_type);
+    println!("opengl: {:?}", opengl);
     let egl = EGL.as_ref().unwrap();
 
     let descriptor = {
@@ -962,6 +968,7 @@ where
         match (api, version) {
             (Api::OpenGlEs, Some((3, _))) => {
                 if egl_version < &(1, 3) {
+                    println!("GLES 3 _");
                     return Err(CreationError::NoAvailablePixelFormat);
                 }
                 out.push(ffi::egl::RENDERABLE_TYPE as raw::c_int);
@@ -971,6 +978,7 @@ where
             }
             (Api::OpenGlEs, Some((2, _))) => {
                 if egl_version < &(1, 3) {
+                    println!("GLES 2 _");
                     return Err(CreationError::NoAvailablePixelFormat);
                 }
                 out.push(ffi::egl::RENDERABLE_TYPE as raw::c_int);
@@ -989,6 +997,7 @@ where
             (Api::OpenGlEs, _) => unimplemented!(),
             (Api::OpenGl, _) => {
                 if egl_version < &(1, 3) {
+                    println!("GL _");
                     return Err(CreationError::NoAvailablePixelFormat);
                 }
                 out.push(ffi::egl::RENDERABLE_TYPE as raw::c_int);
@@ -1033,6 +1042,7 @@ where
         }
 
         if let Some(true) = pf_reqs.double_buffer {
+            println!("double buffer");
             return Err(CreationError::NoAvailablePixelFormat);
         }
 
@@ -1042,6 +1052,7 @@ where
         }
 
         if pf_reqs.stereoscopy {
+            println!("stereoscopy");
             return Err(CreationError::NoAvailablePixelFormat);
         }
 
@@ -1073,6 +1084,7 @@ where
     }
 
     if num_configs == 0 {
+        println!("no configs");
         return Err(CreationError::NoAvailablePixelFormat);
     }
 
@@ -1124,11 +1136,15 @@ where
         .collect::<Vec<_>>();
 
     if config_ids.is_empty() {
+        println!("empty config_ids");
         return Err(CreationError::NoAvailablePixelFormat);
     }
 
     let config_id =
-        config_selector(config_ids, display).map_err(|_| CreationError::NoAvailablePixelFormat)?;
+        config_selector(config_ids, display).map_err(|_| {
+            println!("config_selector error");
+            CreationError::NoAvailablePixelFormat
+        })?;
 
     // analyzing each config
     macro_rules! attrib {
